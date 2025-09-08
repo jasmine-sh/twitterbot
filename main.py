@@ -1,11 +1,8 @@
-import math
 from datetime import date
-from logging import exception
 
 import psycopg2
 import tweepy
 from twitter_keys import api_key, api_secret, consumer_key, consumer_secret, access_token, access_token_secret, bearer_token
-import datetime
 
 debug = True
 
@@ -29,18 +26,19 @@ def tweet_builder(tweet_datetime):
     query = """SELECT * FROM tweet WHERE date_month = %s AND date_day = %s;"""
     cursor.execute(query, (month, day))
     rows = cursor.fetchall()
-    # Pick a tweet if there are multiple for the same day
 
+    # Pick a tweet if there are multiple for the same day
     if len(rows) == 0:
         raise(RuntimeError("No tweet found for this date"))
     choice = year % len(rows)
     tweet_info = rows[choice]
-    print(tweet_info[5])
+
     if tweet_info[5] == "NaN":
         raise(RuntimeError("Tweet text is empty for this date"))
 
-    tweet_text = tweet_info[5] + " - " + tweet_info[7]
-    print(tweet_text)
+    history_year = tweet_info[1].year
+    return_string = "TODAY IN " + str(history_year) + ": " + tweet_info[5] + " " + tweet_info[7]
+
 
     # Close connections
     cursor.close()
@@ -53,6 +51,7 @@ def post_plain_tweet(tweet_text):
         print(tweet_text)
         return 0
     try:
+            #TO-DO: Add media upload version
             response = client.create_tweet(text=tweet_text)
             print("Tweet posted successfully!")
             print(f"Tweet ID: {response.data['id']}")
@@ -62,18 +61,15 @@ def post_plain_tweet(tweet_text):
             print(f"Error posting tweet: {e}")
             return e
 
-def get_tweet_text(self):
-    today = date.today()
-    # hook up to postgres database
 try:
     if debug:
-        tweet_string = tweet_builder(date(2025, 1, 13))
-        #tweet_string = tweet_builder(date(2018, 1, 3))
+        tweet_string = tweet_builder(date.today())
     else:
         tweet_string = tweet_builder(date.today())
 
     post_plain_tweet(tweet_string)
 except Exception as e:
     print("Error generating tweet: " + str(e))
+
 
 
